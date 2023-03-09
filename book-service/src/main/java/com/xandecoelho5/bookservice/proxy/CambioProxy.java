@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "cambio-service", url = "localhost:8000/cambio-service")
+@FeignClient(name = "cambio-service", path = "/cambio-service")
 public interface CambioProxy {
 
     @GetMapping("/{amount}/{from}/{to}")
