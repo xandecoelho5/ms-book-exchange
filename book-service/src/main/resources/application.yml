@@ -23,8 +23,7 @@ spring:
     username: root
     password: root
   flyway:
-    url: jdbc:mysql://localhost:3306/
-    schemas: book_service
+    url: jdbc:mysql://localhost:3306/book_service?useTimezone=true&serverTimezone=UTC
     user: root
     password: root
   jackson:
@@ -38,3 +37,7 @@ springdoc:
   api-docs:
     path: book-service/v3/api-docs
   show-actuator: true
+management:
+  tracing:
+    sampling:
+      probability: 1.0

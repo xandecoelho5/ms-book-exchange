@@ -5,6 +5,7 @@ import com.xandecoelho5.cambioservice.repository.CambioRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import java.math.RoundingMode;
 @RestController
 @RequestMapping("cambio-service")
 @RequiredArgsConstructor
+@Slf4j
 public class CambioController {
 
     private final Environment environment;
@@ -26,6 +28,8 @@ public class CambioController {
     @Operation(summary = "Returns the cambio from a specific amount of money from a currency to another")
     @GetMapping("/{amount}/{from}/{to}")
     public Cambio getCambio(@PathVariable BigDecimal amount, @PathVariable String from, @PathVariable String to) {
+        log.info("getCambio called with {} from {} to {}", amount, from, to);
+
         var cambio = repository.findByFromAndTo(from, to);
 
         if (cambio == null) throw new RuntimeException("Currency not supported");

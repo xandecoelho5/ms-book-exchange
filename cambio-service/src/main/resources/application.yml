@@ -8,10 +8,13 @@ spring:
     username: root
     password: root
   flyway:
-    url: jdbc:mysql://localhost:3306/
-    schemas: cambio_service
+    url: jdbc:mysql://localhost:3306/cambio_service?useTimezone=true&serverTimezone=UTC
     user: root
     password: root
 springdoc:
   api-docs:
     path: cambio-service/v3/api-docs
+management:
+  tracing:
+    sampling:
+      probability: 1.0

@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  rabbit-mq:
+    image: rabbitmq:3.11.10-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - ex-network
+  
+  zipkin-server:
+    image: openzipkin/zipkin:2.24.0
+    ports:
+      - "9411:9411"
+    depends_on:
+      - rabbit-mq
+    environment:
+      - RABBIT_URI=amqp://guest:guest@rabbit-mq:5672
+    networks:
+      - ex-network
+
+  cambio-db:
+    image: mysql:8.0.32
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      - TZ=America/Sao_Paulo
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=docker
+      - MYSQL_PASSWORD=admin123
+      - MYSQL_DATABASE=cambio_service
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_TCP_PORT=3308
+    ports:
+      - "3308:3308"
+    expose:
+      - "3308"
+    networks:
+      - ex-network
+
+  book-db:
+    image: mysql:8.0.32
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      - TZ=America/Sao_Paulo
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=docker
+      - MYSQL_PASSWORD=admin123
+      - MYSQL_DATABASE=book_service
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_TCP_PORT=3310
+    ports:
+      - "3310:3310"
+    expose:
+      - "3310"
+    networks:
+      - ex-network
+
+  naming-server:
+    image: xandecoelho/naming-server:0.0.1-SNAPSHOT
+    ports:
+      - "8761:8761"
+    networks:
+      - ex-network
+  
+  api-gateway:
+    image: xandecoelho/api-gateway:0.0.1-SNAPSHOT
+    ports:
+      - "8765:8765"
+    networks:
+      - ex-network
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://naming-server:8761/eureka/
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin-server:9411/api/v2/spans
+      - RABBIT_URI=amqp://guest:guest@rabbit-mq:5672
+      - SPRING_RABBITMQ_HOST=rabbit-mq
+      - SPRING-ZIPKIN_SENDER_TYPE=rabbit
+    depends_on:
+      - naming-server
+      - rabbit-mq
+
+  cambio-service:
+    image: xandecoelho/cambio-service
+    restart: always
+    # ./cambio-service
+    build: 
+      context: .
+      dockerfile: ./cambio-service/Dockerfile
+    environment:
+      - TZ=America/Sao_Paulo
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://naming-server:8761/eureka/
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin-server:9411/api/v2/spans
+      - RABBIT_URI=amqp://guest:guest@rabbit-mq:5672
+      - SPRING_RABBITMQ_HOST=rabbit-mq
+      - SPRING-ZIPKIN_SENDER_TYPE=rabbit
+      - SPRING_DATASOURCE_URL=jdbc:mysql://cambio-db:3308/cambio_service?useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=docker
+      - SPRING_DATASOURCE_PASSWORD=admin123
+      - SPRING_FLYWAY_URL=jdbc:mysql://cambio-db:3308/cambio_service?useSSL=false&serverTimezone=UTC
+      - SPRING_FLYWAY_USER=docker
+      - SPRING_FLYWAY_PASSWORD=admin123
+    ports:
+      - "8000:8000"
+    depends_on:
+      - naming-server
+      - cambio-db
+      - rabbit-mq
+    networks:
+      - ex-network
+
+  book-service:
+    image: xandecoelho/book-service
+    restart: always
+    build:
+      context: ./book-service
+      # dockerfile: ../book-service.Dockerfile
+    environment:
+      - TZ=America/Sao_Paulo
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://naming-server:8761/eureka/
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin-server:9411/api/v2/spans
+      - RABBIT_URI=amqp://guest:guest@rabbit-mq:5672
+      - SPRING_RABBITMQ_HOST=rabbit-mq
+      - SPRING-ZIPKIN_SENDER_TYPE=rabbit
+      - SPRING_DATASOURCE_URL=jdbc:mysql://book-db:3310/book_service?useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=docker
+      - SPRING_DATASOURCE_PASSWORD=admin123
+      - SPRING_FLYWAY_URL=jdbc:mysql://book-db:3310/book_service?useSSL=false&serverTimezone=UTC
+      - SPRING_FLYWAY_USER=docker
+      - SPRING_FLYWAY_PASSWORD=admin123
+    ports:
+      - "8100:8100"
+    depends_on:
+      - naming-server
+      - book-db
+      - rabbit-mq
+    networks:
+      - ex-network
+networks:
+  ex-network:
+    driver: bridge
