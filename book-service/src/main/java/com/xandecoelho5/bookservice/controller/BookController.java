@@ -31,24 +31,4 @@ public class BookController {
 
         return book;
     }
-
-//    @GetMapping("/{id}/{currency}")
-//    public Book findBook(@PathVariable Long id, @PathVariable String currency) {
-//        var book = repository.findById(id).orElseThrow(() -> new RuntimeException("Book not found"));
-//
-//        var params = new HashMap<String, String>();
-//        params.put("amount", book.getPrice().toString());
-//        params.put("from", "USD");
-//        params.put("to", currency);
-//
-//        var response = new RestTemplate()
-//                .getForEntity("http://localhost:8000/cambio-service/{amount}/{from}/{to}", Cambio.class, params);
-//        var cambio = response.getBody();
-//
-//        var port = environment.getProperty("local.server.port");
-//        book.setEnvironment(port);
-//        book.setPrice(cambio.getConvertedValue());
-//
-//        return book;
-//    }
 }
