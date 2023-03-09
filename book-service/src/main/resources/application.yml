@@ -1,0 +1,21 @@
+server:
+  port: 8100
+spring:
+  application:
+    name: book-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/book_service?useTimezone=true&serverTimezone=UTC
+    username: root
+    password: root
+  flyway:
+    url: jdbc:mysql://localhost:3306/
+    schemas: book_service
+    user: root
+    password: root
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    default-property-inclusion: non_null
+  jpa:
+    hibernate:
+      ddl-auto: update
